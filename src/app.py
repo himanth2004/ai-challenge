@@ -16,28 +16,34 @@ CORS(app)
 
 try:
     print("Loading PyTorch behavior model...")
+
     candidate_behavior_paths = [
         os.environ.get("BEHAVIOR_MODEL_PATH"),
         os.path.join(BASE_DIR, "behavior_model.pth"),
         os.path.join(os.getcwd(), "behavior_model.pth"),
         os.path.join(os.path.dirname(BASE_DIR), "behavior_model.pth"),
     ]
+
     behavior_model_path = next((p for p in candidate_behavior_paths if p and os.path.exists(p)), None)
+
     print(f"Behavior model candidates: {candidate_behavior_paths}")
     print(f"Behavior model resolved path: {behavior_model_path}")
 
     if behavior_model_path:
+        print(f"Loading behavior model from: {behavior_model_path}")
         behavior_model = MouseDynamicsClassifier()
-        behavior_model.load_state_dict(torch.load(behavior_model_path, map_location=torch.device("cpu")))
+        behavior_model.load_state_dict(torch.load(behavior_model_path, map_location="cpu"))
         behavior_model.eval()
         print("✅ PyTorch behavior model loaded successfully.")
     else:
         raise FileNotFoundError("behavior_model.pth not found in candidate paths")
+
 except Exception as e:
     print(f"❌ Error loading PyTorch model: {e}")
     behavior_model = None
 
-typing_pipeline = None
+
+typing_pipeline = Non
 try:
     print("Loading typing pipeline...")
     candidate_pipeline_paths = [
