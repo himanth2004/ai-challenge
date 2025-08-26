@@ -208,7 +208,7 @@ def train():
     # Save CPU-only state_dict
     out_path = os.path.join(BASE_DIR, "behavior_model.pth")
     state_dict_cpu = {k: v.cpu() for k, v in model.state_dict().items()}
-    torch.save(state_dict_cpu, out_path)
+    torch.save(model.state_dict(), "behavior_model.pth")
     print(f"Saved trained behavior model to: {out_path}")
 
 

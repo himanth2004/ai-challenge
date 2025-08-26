@@ -4,9 +4,11 @@ import os
 import re
 import torch
 import joblib
-from model_definition import MouseDynamicsClassifier
+from src.model_definition import MouseDynamicsClassifier
+
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Use templates under src/templates
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 
 app = Flask(__name__, template_folder=TEMPLATES_DIR)
