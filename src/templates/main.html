@@ -709,7 +709,7 @@ function goToDashboard() {
                 document.getElementById('mouseConfidence').textContent = `Confidence: ${Math.floor(Math.random() * 20 + 80)}%`;
                 document.getElementById('mouseProcessingTime').textContent = `Processing time: ${processingTime}ms`;
                 
-                logEvent(`Mouse analysis complete: ${prediction === 1 ? 'HUMAN' : 'ROBOT'} (${processingTime}ms)`, 'prediction');
+                logEvent(`Mouse analysis complete: ${prediction === 0 ? 'HUMAN' : 'ROBOT'} (${processingTime}ms)`, 'prediction');
                 
                 // Update global metrics
                 confidenceLevel.textContent = `${Math.floor(Math.random() * 20 + 80)}%`;
@@ -753,7 +753,7 @@ function goToDashboard() {
                 
                 logEvent(`Typing analysis complete: ${prediction === 0 ? 'HUMAN' : 'ROBOT'} (${processingTime}ms)`, 'prediction');
                 
-            } catch (error) {
+            } catch (error) {   
                 logEvent(`Error during typing analysis: ${error.message}`, 'error');
                 typingPredictionResult.textContent = 'ERROR';
                 typingPredictionResult.className = 'text-red-400';

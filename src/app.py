@@ -1,78 +1,46 @@
-from flask import Flask, render_template, request, jsonify
-from flask_cors import CORS
 import os
-import re
-import torch
 import joblib
-from src.model_definition import MouseDynamicsClassifier
-
+from flask import Flask, jsonify, render_template, request
+from flask_cors import CORS
+import torch
+import re
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# Use templates under src/templates
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 
 app = Flask(__name__, template_folder=TEMPLATES_DIR)
 CORS(app)
 
-try:
-    print("Loading PyTorch behavior model...")
+# Resolve the model paths
+behavior_model_path = os.path.join(BASE_DIR, "behavior_model.pkl")
+typing_pipeline_path = os.path.join(BASE_DIR, "typing_pipeline.pkl")
 
-    candidate_behavior_paths = [
-        os.environ.get("BEHAVIOR_MODEL_PATH"),
-        os.path.join(BASE_DIR, "behavior_model.pth"),
-        os.path.join(os.getcwd(), "behavior_model.pth"),
-        os.path.join(os.path.dirname(BASE_DIR), "behavior_model.pth"),
-    ]
-
-    behavior_model_path = next((p for p in candidate_behavior_paths if p and os.path.exists(p)), None)
-
-    print(f"Behavior model candidates: {candidate_behavior_paths}")
-    print(f"Behavior model resolved path: {behavior_model_path}")
-
-    if behavior_model_path:
-        print(f"Loading behavior model from: {behavior_model_path}")
-        behavior_model = MouseDynamicsClassifier()
-        behavior_model.load_state_dict(torch.load(behavior_model_path, map_location="cpu"))
-        behavior_model.eval()
-        print("✅ PyTorch behavior model loaded successfully.")
-    else:
-        raise FileNotFoundError("behavior_model.pth not found in candidate paths")
-
-except Exception as e:
-    print(f"❌ Error loading PyTorch model: {e}")
+# Load models safely
+if os.path.exists(behavior_model_path):
+    behavior_model = joblib.load(behavior_model_path)
+    print(f"✅ Loaded behavior model from: {behavior_model_path}")
+else:
+    print(f"❌ behavior_model.pkl not found at: {behavior_model_path}")
     behavior_model = None
 
-
-typing_pipeline = Non
-try:
-    print("Loading typing pipeline...")
-    candidate_pipeline_paths = [
-        os.environ.get("TYPING_PIPELINE_PATH"),
-        os.path.join(BASE_DIR, "typing_pipeline.pkl"),
-        os.path.join(os.getcwd(), "typing_pipeline.pkl"),
-        os.path.join(os.path.dirname(BASE_DIR), "typing_pipeline.pkl"),
-    ]
-    typing_pipeline_path = next((p for p in candidate_pipeline_paths if p and os.path.exists(p)), None)
-    print(f"Typing pipeline candidates: {candidate_pipeline_paths}")
-    print(f"Typing pipeline resolved path: {typing_pipeline_path}")
-    if typing_pipeline_path:
-        typing_pipeline = joblib.load(typing_pipeline_path)
-        print("✅ Typing pipeline loaded successfully.")
-    else:
-        raise FileNotFoundError("typing_pipeline.pkl not found in candidate paths")
-except Exception as e:
-    print(f"❌ Error loading typing pipeline: {e}")
+if os.path.exists(typing_pipeline_path):
+    typing_pipeline = joblib.load(typing_pipeline_path)
+    print(f"✅ Loaded typing pipeline from: {typing_pipeline_path}")
+else:
+    print(f"❌ typing_pipeline.pkl not found at: {typing_pipeline_path}")
     typing_pipeline = None
+
+import numpy as np
 
 @app.route("/predict", methods=["POST"])
 def predict():
     data = request.json
     behavior_features = data.get("behavior")
-    print(f"\n--- Prediction Request Received ---")                # Printed in terminal
-    print(f"Input data: {behavior_features}")                     # Printed in terminal
-    print("Processing with behavior model...")                    # Printed in terminal
+    print(f"\n--- Prediction Request Received ---")
+    print(f"Input data: {behavior_features}")
+    print("Processing with behavior model...")
 
-    if not behavior_model:
+    if behavior_model is None:
         print("❌ No behavior model loaded.")
         return jsonify({"prediction": "No behavior model loaded."})
 
@@ -82,17 +50,28 @@ def predict():
 
     try:
         coords = behavior_features
-        # Use only the latest mouse coordinate (single point)
-        if len(coords) > 1:
-            coords = [coords[-1]]
-        behavior_tensor = torch.tensor([coords], dtype=torch.float32)
-        with torch.no_grad():
-            output = behavior_model(behavior_tensor)
-            pred_behavior = torch.argmax(output, dim=1).item()
-        print(f"✅ Behavior model output: {pred_behavior}")        # Printed in terminal
+
+        # Extract simple features (similar to training)
+        xs = np.array([p[0] for p in coords])
+        ys = np.array([p[1] for p in coords])
+        dx = np.diff(xs) if len(xs) > 1 else np.array([0])
+        dy = np.diff(ys) if len(ys) > 1 else np.array([0])
+        dist = np.sqrt(dx**2 + dy**2)
+        features = [
+            xs.mean(), xs.std(), xs.min(), xs.max(),
+            ys.mean(), ys.std(), ys.min(), ys.max(),
+            dist.mean(), dist.std(), dist.sum()
+        ]
+
+        # RandomForest expects 2D array
+        features_array = np.array([features])
+        pred_behavior = int(behavior_model.predict(features_array)[0])
+
+        print(f"✅ Behavior model output: {pred_behavior}")
         return jsonify({"prediction": pred_behavior})
+
     except Exception as e:
-        print(f"❌ Error during prediction: {e}")                  # Printed in terminal
+        print(f"❌ Error during prediction: {e}")
         return jsonify({"prediction": "Error during prediction."})
 
 @app.route("/predict_typing", methods=["POST"])
