@@ -689,7 +689,7 @@ function goToDashboard() {
             const payload = { behavior: behaviorFeatures };
 
             try {
-                const response = await fetch('/predict', {
+                const response = await fetch(' http://127.0.0.1:5000/predict', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
@@ -703,8 +703,8 @@ function goToDashboard() {
                 const prediction = data.prediction;
                 const processingTime = Date.now() - startTime;
                 
-                mousePredictionResult.textContent = prediction === 1 ? 'HUMAN' : 'ROBOT';
-                mousePredictionResult.className = prediction === 1 ? 'text-green-400' : 'text-red-400';
+                mousePredictionResult.textContent = prediction === 0 ? 'HUMAN' : 'ROBOT';
+                mousePredictionResult.className = prediction === 0 ? 'text-green-400' : 'text-red-400';
                 
                 document.getElementById('mouseConfidence').textContent = `Confidence: ${Math.floor(Math.random() * 20 + 80)}%`;
                 document.getElementById('mouseProcessingTime').textContent = `Processing time: ${processingTime}ms`;
@@ -714,7 +714,7 @@ function goToDashboard() {
                 // Update global metrics
                 confidenceLevel.textContent = `${Math.floor(Math.random() * 20 + 80)}%`;
                 threatLevel.textContent = prediction === 0 ? 'LOW' : 'HIGH';
-                threatLevel.className = prediction === 1 ? 'text-green-400' : 'text-red-400';
+                threatLevel.className = prediction === 0 ? 'text-green-400' : 'text-red-400';
                 
             } catch (error) {
                 logEvent(`Error during mouse analysis: ${error.message}`, 'error');
@@ -731,7 +731,7 @@ function goToDashboard() {
             logEvent('Sending typing data for analysis...', 'info');
 
             try {
-                const response = await fetch('/predict_typing', {
+                const response = await fetch(' http://127.0.0.1:5000/predict_typing', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ text: text }),
@@ -745,13 +745,13 @@ function goToDashboard() {
                 const prediction = data.prediction;
                 const processingTime = Date.now() - startTime;
                 
-                typingPredictionResult.textContent = prediction === 1 ? 'HUMAN' : 'ROBOT';
-                typingPredictionResult.className = prediction === 1 ? 'text-green-400' : 'text-red-400';
+                typingPredictionResult.textContent = prediction === 0 ? 'HUMAN' : 'ROBOT';
+                typingPredictionResult.className = prediction === 0 ? 'text-green-400' : 'text-red-400';
                 
                 document.getElementById('typingConfidence').textContent = `Confidence: ${Math.floor(Math.random() * 20 + 80)}%`;
                 document.getElementById('typingProcessingTime').textContent = `Processing time: ${processingTime}ms`;
                 
-                logEvent(`Typing analysis complete: ${prediction === 1 ? 'HUMAN' : 'ROBOT'} (${processingTime}ms)`, 'prediction');
+                logEvent(`Typing analysis complete: ${prediction === 0 ? 'HUMAN' : 'ROBOT'} (${processingTime}ms)`, 'prediction');
                 
             } catch (error) {
                 logEvent(`Error during typing analysis: ${error.message}`, 'error');
