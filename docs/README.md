@@ -11,3 +11,4 @@ You can include the following (not an exhaustive list, feel free to add more):
 - Salient features of the project
 
 Note: Kindly add screenshots wherever possible.
+<img width="1888" height="941" alt="Screenshot 2025-08-27 162317" src="https://github.com/user-attachments/assets/e289c77a-2a25-4218-ba7e-0f4a2fe782c5" />
